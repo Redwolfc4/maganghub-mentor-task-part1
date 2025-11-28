@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Jika Anda pakai plugin animate, pastikan package-nya support v4 atau gunakan native */
+/* @import "tw-animate-css"; <--- Coba komen dulu jika error */
+
+:root {
+  --font-mono: "Roboto Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+  line-height: 32px;
+
+  background: rgb(0, 0, 0);
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui;
+  font-size: 18px;
+  line-height: 32px;
+
+  margin: 0;
+  color: rgb(1000, 1000, 1000);
+
+  @media (max-width: 1024px) {
+    font-size: 15px;
+    line-height: 24px;
+  }
+}
