@@ -62,9 +62,7 @@ const productSchema = z.object({
     price: z.number().min(1, "Harga minimal 1"),
     image: z
         .string()
-        .pipe(
-            z.url({ message: "URL tidak valid" })
-        )
+        .url({ message: "URL tidak valid" })
         .optional()
         .or(z.literal("")) // izinkan empty string
 });

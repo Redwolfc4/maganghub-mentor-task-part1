@@ -23,7 +23,7 @@ const productSchema = z.object({
     varianItem: z.string().min(2, "Varian item wajib"),
     description: z.string().optional(),
     price: z.number().min(1, "Harga minimal 1"),
-    image: z.string().pipe(z.url()).optional().or(z.literal(""))
+    image: z.string().url({ message: "URL tidak valid" }).optional().or(z.literal(""))
 })
 
 type ProductFormType = z.infer<typeof productSchema>
