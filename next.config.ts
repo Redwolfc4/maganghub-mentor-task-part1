@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
+import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  // atur hostname dari endpoint luar atau web
+  images:{
+    remotePatterns: [
+      {
+        hostname: 'www.almumtaz.com.pk',
+        protocol: 'https',
+      }
+    ]
+  }
+  
 };
 
-export default nextConfig;
+export default withPayload(nextConfig);
