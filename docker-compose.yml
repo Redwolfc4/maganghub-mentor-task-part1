@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # 1. Layanan Aplikasi (Next.js + Payload)
+  app:
+    container_name: my-payload-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Koneksi Database (gunakan nama service 'mongo' sebagai host)
+      - DATABASE_URI=mongodb+srv://salahudinkoliq17:salahudinkoliq17@cluster0.esvgd.mongodb.net/latihanku2?appName=Cluster0
+      # Koneksi Redis (gunakan nama service 'redis' sebagai host)
+      - REDIS_URL=redis://redis:6379
+      - PAYLOAD_SECRET=fb9deadbdbbfbfd7becba1d6
+      - NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+    depends_on:
+    # - mongo
+      - redis
+    networks:
+      - payload-network
+
+  # 2. Layanan Database (MongoDB)
+  # mongo:
+  #   container_name: payload-mongo
+  #   image: mongo:latest
+  #   restart: always
+  #   ports:
+  #     - "27017:27017" # Opsional: buka port jika ingin akses via Compass dari host
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   networks:
+  #     - payload-network
+
+  # 3. Layanan Redis
+  redis:
+    container_name: payload-redis
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379" # Opsional: buka port jika ingin debug redis dari luar
+    volumes:
+      - redis-data:/data
+    networks:
+      - payload-network
+
+volumes:
+  # mongo-data:
+  redis-data:
+
+networks:
+  payload-network:
+    driver: bridge

@@ -58,7 +58,6 @@ const Products: CollectionConfig = {
     {
       name: "description",
       type: "text",
-      required: true,
     },
 
     /**
@@ -109,7 +108,6 @@ const Products: CollectionConfig = {
     {
       name: "image",
       type: "text",
-      required: true,
       // fields: [
         //     {
         //         name: "url",
@@ -121,4 +119,4 @@ const Products: CollectionConfig = {
   ],
 };
 
-export default Products;
+export {Products};

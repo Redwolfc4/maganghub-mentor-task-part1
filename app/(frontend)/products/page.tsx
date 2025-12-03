@@ -13,9 +13,11 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { FaEdit, FaTrash } from 'react-icons/fa'
-import { useModalConfirmationHandle } from "../zustandHandle/useModalConfirmationHandel"
+import { FaEdit, FaTrash, FaUser } from 'react-icons/fa'
+import { useFilterProduct, useModalConfirmationHandle } from "../zustandHandle/useModalConfirmationHandel"
 import ConfirmDeleteModal from "@/app/(frontend)/component/DeleteModalConfirmation"
+import { Input } from "@/components/ui/input"
+import { useDebounce } from "use-debounce"
 
 /**
  * ===============================================
@@ -34,6 +36,9 @@ const ProductTable = () => {
     // buat routernya
     const navigation = useRouter();
 
+    const { filterQuery, setFilterQuery } = useFilterProduct()
+
+    const [queryDebounced] = useDebounce(filterQuery, 1000);
 
     /**
      * Hook Custom: useProducts()
@@ -42,7 +47,7 @@ const ProductTable = () => {
      * - products: array berisi data produk
      * - isLoading: boolean, true = saat fetch API berlangsung
      */
-    const { products, isLoading, deleteProduct, isDeleting } = useProducts()
+    const { products, isLoading, deleteProduct, isDeleting } = useProducts(queryDebounced)
 
     // ambil dari konfigurasi zustandhandle
     const { isOpen, onOpen, onClose, onConfirm, selectedId } = useModalConfirmationHandle()
@@ -86,12 +91,24 @@ const ProductTable = () => {
                 </h1>
             </Header>
 
-            <div className="w-full flex justify-center sm:justify-end my-3 sm:px-3">
-                <Button onClick={() => navigation.push("/products/add")} variant="outline">Add Page</Button>
+            <div className="w-full flex flex-col sm:flex-row justify-center sm:justify-end my-3 sm:px-3 gap-3">
+                {/* filterisasi data */}
+                <Input
+                    type="text"
+                    onChange={(e) => {
+                        setFilterQuery(e.target.value)
+                    }}
+                    defaultValue={filterQuery}
+                    placeholder="Cari nama produk"
+                    className="w-full mr-2"
+                />
+
+
+                <Button onClick={() => navigation.push("/products/add")} className="cursor-pointer" variant="outline">Add Page</Button>
             </div>
 
             {/** WRAPPER TABEL */}
-            <div className="max-w-full">
+            <div className="max-w-full mx-3">
 
                 <Table>
                     {/** HEADER TABEL */}
@@ -138,6 +155,11 @@ const ProductTable = () => {
                             {/** PRICE COLUMN */}
                             <TableHead className="sticky top-0 z-35 bg-black shadow-md text-center text-white font-bold">
                                 Harga
+                            </TableHead>
+
+                            {/* AKSI EDIT*/}
+                            <TableHead className="sticky top-0 z-35 bg-black shadow-md text-center text-white font-bold">
+                                Detail
                             </TableHead>
 
                             {/* AKSI EDIT*/}
@@ -236,6 +258,15 @@ const ProductTable = () => {
                                         }) : ''}
                                     </TableCell>
 
+                                    {/* aksi detail */}
+                                    <TableCell className="text-center font-medium text-gray-300">
+                                        <Link href={`/products/${product.id}`}>
+                                            <Button variant="outline" className="border-blue-500 border-2 cursor-pointer hover:bg-blue-500 text-center p-2" size="sm">
+                                                <FaUser className="text-white" />
+                                            </Button>
+                                        </Link>
+                                    </TableCell>
+
                                     {/* aksi edit */}
                                     <TableCell className="text-center font-medium text-gray-300">
                                         <Link href={`/products/${product.id}/edit`}>
@@ -257,7 +288,7 @@ const ProductTable = () => {
                             <>
                                 {/** ROW JIKA TIDAK ADA DATA */}
                                 <TableRow >
-                                    <TableCell colSpan={4} className="h-24 text-center text-gray-500">
+                                    <TableCell colSpan={10} className="h-24 text-center text-gray-300">
                                         Tidak ada data ditemukan.
                                     </TableCell>
                                 </TableRow>
