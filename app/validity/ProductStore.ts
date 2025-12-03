@@ -1,5 +1,5 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseMutateFunction } from '@tanstack/react-query';
 
 // --- TIPE DATA ---
 // 1. Tipe data untuk HASIL FETCH (biasanya ada ID dari server)
@@ -40,8 +40,14 @@ export type NewProductInput = {
 
 // --- FUNGSI API (FETCHER) ---
 
-// A. Fetcher untuk GET Data (Dari Fake Store API)
-const fetchProductsApi = async (): Promise<ProductResponse> => {
+// A. Fetcher untuk GET Data dan search data
+const fetchProductsOrSearchApi = async (query: string): Promise<ProductResponse> => {
+  // Jika ada query search, panggil endpoint search
+    if (query) {
+        const res = await fetch(`/api/products?keyword=${query}`);
+        if (!res.ok) throw new Error("Gagal mencari data");
+        return res.json();
+    }
     // Mengambil data dari Fake Store API
     const res = await fetch("/api/products");
     
@@ -54,7 +60,7 @@ const fetchProductsApi = async (): Promise<ProductResponse> => {
 
 // Get products by id
 const fetchProductByIdApi = async (id: string): Promise<Product> => {
-    // Mengambil data dari Fake Store API
+    // Mengambil data dari mongodb get by id
     const res = await fetch(`/api/products/${id}`);
     
     // jika response error
@@ -72,6 +78,8 @@ const addProductApi = async (newProduct: NewProductInput) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newProduct)
     });
+  
+    console.log(res);
     
     // jika response gagal
     if (!res.ok) throw new Error("Gagal upload data");
@@ -111,13 +119,28 @@ const deleteProductApi = async (id: string) => {
 };
 
 // --- CUSTOM HOOK: LIST + ADD + UPDATE ---
-export const useProducts = () => {
+export interface UseProductsResult {
+    products: ProductResponse | undefined;
+    isLoading: boolean;
+    isError: boolean;
+    addProduct: UseMutateFunction<any, Error, NewProductInput, unknown>;
+    isAdding: boolean;
+    addError: Error | null;
+    updateProduct: UseMutateFunction<any, Error, { id: string; data: NewProductInput }, unknown>;
+    isUpdating: boolean;
+    updateError: Error | null;
+    deleteProduct: UseMutateFunction<any, Error, string, unknown>;
+    isDeleting: boolean;
+    deleteError: Error | null;
+}
+
+export const useProducts = (searchQuery: string = ""): UseProductsResult => {
   const queryClient = useQueryClient();
 
   // 1. QUERY: GET LIST PRODUK
   const productQuery = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProductsApi,
+    queryKey: ["products", searchQuery],
+    queryFn: () => fetchProductsOrSearchApi(searchQuery),
     staleTime: 1000 * 60 * 5, // 5 menit
   });
 
@@ -178,6 +201,8 @@ export const useProductById = (id: string | undefined) => {
   return useQuery({
     queryKey: ["product", id],
     queryFn: () => fetchProductByIdApi(id as string),
-    enabled: !!id, // hanya jalan kalau id ada
+    enabled: !!id, // hanya jalan kalau id 
+    staleTime: 1000 * 60 * 5, // 5 menit
   });
 };
+

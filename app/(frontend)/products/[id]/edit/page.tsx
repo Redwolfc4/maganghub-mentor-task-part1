@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { use, useMemo } from 'react'
+import { useParams, useRouter } from "next/navigation"
+import { useMemo } from 'react'
 
 import Header from "@/app/(frontend)/component/Header"
 import { Button } from "@/components/ui/button"
@@ -27,8 +27,8 @@ const productSchema = z.object({
 })
 
 type ProductFormType = z.infer<typeof productSchema>
-export default function EditProductPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
-    const { id } = use(params)
+export default function EditProductPage() {
+    const { id } = useParams() as { id: string }
     const router = useRouter()
 
     const { updateProduct, isUpdating } = useProducts()

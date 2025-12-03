@@ -9,9 +9,14 @@ const nextConfig: NextConfig = {
       {
         hostname: 'www.almumtaz.com.pk',
         protocol: 'https',
+      }, 
+      {
+        hostname: 'tse2.mm.bing.net',
+        protocol: 'https',
       }
     ]
-  }
+  },
+  output: "standalone",
   
 };
 
