@@ -4,18 +4,24 @@ import { deleteCache } from "@/lib/cacheHandler";
 import redisClient from "@/lib/redis";
 import { NextResponse } from "next/server";
 
+/**
+ * DELETE /api/products/[id]
+ * 
+ * Deletes a product and invalidates the cache.
+ */
 export async function DELETE(req: Request, { params }: any) {
   try {
     const { id } = await params;
 
-    // 1. HAPUS DATA DI DATABASE
+    // 1. DELETE FROM DATABASE
     const payload = await getPayload({ config: configPromise });
     const deleted = await payload.delete({
       collection: "products",
       id,
     });
 
-    // 2. HAPUS CACHE DI REDIS
+    // 2. INVALIDATE CACHE
+    // Remove all product-related caches to reflect the deletion immediately.
     await deleteCache(`products:*`);
     console.log(`Cache for product:${id} deleted from Redis`);
 
@@ -26,14 +32,17 @@ export async function DELETE(req: Request, { params }: any) {
   }
 }
 
+/**
+ * PATCH /api/products/[id]
+ * 
+ * Updates a product and invalidates the cache.
+ */
 export async function PATCH(req: Request, { params }: any) {
   try {
     const { id } = await params;
     const data = await req.json();
 
-    console.log('jalan');
-
-    // 1. UPDATE DATA DI DATABASE
+    // 1. UPDATE DATABASE
     const payload = await getPayload({ config: configPromise });
     const updated = await payload.update({
       collection: "products",
@@ -41,7 +50,8 @@ export async function PATCH(req: Request, { params }: any) {
       data,
     });
 
-    // 2. HAPUS CACHE DI REDIS
+    // 2. INVALIDATE CACHE
+    // Clear cache to ensure the updated data is fetched on next request.
     await deleteCache(`products:*`);
     console.log(`Cache for product:${id} and products:* deleted from Redis`);
 
@@ -52,18 +62,28 @@ export async function PATCH(req: Request, { params }: any) {
   }
 }
 
+/**
+ * GET /api/products/[id]
+ * 
+ * Retrieves a single product by ID with caching.
+ * Strategy: Cache-First (Read-Through)
+ */
 export async function GET(req: Request, { params }: any) {
   try {
     const { id } = await params;
     
+    // Define a unique cache key for this specific product
     const cacheKey = `product:${id}`;
+    
+    // 1. CHECK REDIS CACHE
     const cachedProduct = await redisClient.get(cacheKey);
 
     if (cachedProduct) {
       console.log(`Cache hit for product:${id}`);
       return NextResponse.json(JSON.parse(cachedProduct));
     }
-    // 1. AMBIL DATA DARI DATABASE
+
+    // 2. CACHE MISS: FETCH FROM DATABASE
     const payload = await getPayload({ config: configPromise });
     const product = await payload.findByID({
       collection: "products",
@@ -74,7 +94,9 @@ export async function GET(req: Request, { params }: any) {
       return NextResponse.json({ message: "Product not found" }, { status: 400 });
     }
       
-    // 2. SIMPAN DATA DI REDIS
+    // 3. SAVE TO REDIS
+    // Cache the individual product data for future requests.
+    // Note: Consider adding an expiration (TTL) here if data changes frequently, e.g., .setEx(key, 3600, ...)
     await redisClient.set(cacheKey, JSON.stringify(product)); 
 
     console.log(`Cache miss for product:${id}, fetching from DB`);

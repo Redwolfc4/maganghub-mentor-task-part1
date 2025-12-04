@@ -20,16 +20,15 @@ import { Input } from "@/components/ui/input"
 import { useDebounce } from "use-debounce"
 
 /**
- * ===============================================
- *  COMPONENT: ProductTable
- *  -----------------------------------------------
- *  Fungsi:
- *  - Menampilkan daftar produk dalam bentuk tabel
- *  - Mengambil data dari global store (Zustand)
- *  - Menampilkan state loading saat data belum siap
- *  - Menggunakan shadcn/ui table untuk styling
- *  - Memiliki header tabel yang "sticky"
- * ===============================================
+ * ProductTable Component
+ * 
+ * Displays a paginated list of products in a responsive table.
+ * 
+ * Features:
+ * - Fetches data from global store (Zustand).
+ * - Real-time search/filtering with debounce.
+ * - Sticky headers and columns for better usability.
+ * - CRUD actions (Edit, Delete, View Detail).
  */
 
 const ProductTable = () => {

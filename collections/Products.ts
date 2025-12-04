@@ -2,20 +2,14 @@ import type { CollectionConfig } from "payload";
 import redisClient from "@/lib/redis";
 
 /**
- * ========================
- *  PRODUCTS COLLECTION
- * ========================
- *
- * Collection ini digunakan untuk menyimpan data produk di Payload CMS.
- *
- * Setiap field dalam collection ini sudah dikonfigurasi agar:
- * - Bisa diakses public (create + read = true)
- * - Menyimpan data dasar produk (title, description, price, color, varianItem, image)
- *
- * Catatan penting:
- * - Field `image` TIDAK menggunakan upload bawaan Payload.
- * - Field `image` bertipe `text`, sehingga bisa menyimpan URL gambar eksternal.
- * - Cocok untuk gambar dari internet (misal: https://example.com/image.webp)
+ * Products Collection
+ * 
+ * Stores product data in Payload CMS.
+ * 
+ * Configuration:
+ * - Public access (create, read, update, delete).
+ * - Stores basic product details (title, description, price, etc.).
+ * - Image handling: Uses a text field for external URLs instead of Payload's upload system.
  */
 
 const Products: CollectionConfig = {

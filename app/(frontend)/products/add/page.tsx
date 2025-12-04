@@ -1,24 +1,15 @@
 'use client'
 
 /**
- * ============================================================
- * ADD PRODUCT PAGE — NEXT.JS + SHADCN/UI + ZOD + TANSTACK QUERY
- * ============================================================
+ * Add Product Page
  * 
- * Halaman ini digunakan untuk menambahkan produk baru.
- * Menggunakan:
- * - React Hook Form → handling form
- * - Zod → validasi form
- * - ShadCN UI → komponen UI form
- * - TanStack Query → mutation untuk add data
+ * A form page for creating new products.
  * 
- * Struktur:
- * 1. Import Dependencies
- * 2. Zod Schema (validasi)
- * 3. Type inference dari Zod
- * 4. Function Component + React Hook Form
- * 5. Render Form lengkap (ShadCN)
- * 6. Submit handler (menggunakan addProduct dari ProductStore)
+ * Tech Stack:
+ * - React Hook Form for form state management.
+ * - Zod for schema validation.
+ * - ShadCN UI for accessible form components.
+ * - TanStack Query for data mutation.
  */
 
 import Header from "../../component/Header";

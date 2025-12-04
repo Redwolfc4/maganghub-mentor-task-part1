@@ -1,47 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
-import configPromise from '@payload-config'; // Pastikan path ini sesuai config payload Anda
-import redisClient from '@/lib/redis'; // Import redis helper yang sudah kita buat sebelumnya
+import configPromise from '@payload-config';
+import redisClient from '@/lib/redis';
 import { deleteCache } from '@/lib/cacheHandler';
 
-const payload = await getPayload({ config: configPromise });
+/**
+ * GET /api/products
+ * 
+ * Retrieves a list of products with support for:
+ * 1. Caching (Redis) for performance optimization.
+ * 2. Search (by keyword).
+ * 3. Pagination.
+ * 
+ * Strategy:
+ * - "All Products" (no filters) are cached under `products:all`.
+ * - Search results are cached dynamically based on keyword and page, e.g., `products:search:{keyword}:{page}`.
+ * - Cache expires in 1 hour (3600 seconds).
+ */
 export const GET = async (req: Request) => {
+  const payload = await getPayload({ config: configPromise });
   
-  // 1. Cek apakah ada Query Params (Search/Filter/Pagination)
+  // Parse query parameters
   const { searchParams } = new URL(req.url);
   const hasQuery = Array.from(searchParams.keys()).length > 0;
 
-  // Key untuk cache "Semua Data" (Halaman 1, tanpa filter)
+  // Cache key for the default "All Products" view
   const cacheKey = 'products:all';
   
   try {
-    // --- SKENARIO 1: GET ALL (Tanpa Filter) -> PAKAI REDIS ---
+    // --- SCENARIO 1: GET ALL (No Filters) ---
+    // Prioritize Redis cache to reduce database load for the most common request.
     if (!hasQuery) {
-      // A. Cek Redis
       const cachedData = await redisClient.get(cacheKey);
       
       if (cachedData) {
-        // HIT! Kembalikan data dari cache
         return NextResponse.json(JSON.parse(cachedData), { status: 200 });
       }
 
-      // MISS! Ambil dari Payload (Database)
+      // Cache Miss: Fetch from Database
       const result = await payload.find({
         collection: 'products',
         depth: 1,
-        limit: 100, // Atur limit default sesuai kebutuhan
+        limit: 100,
       });
 
-      // Simpan ke Redis (Expired 1 jam / 3600 detik)
+      // Cache the result for 1 hour
       await redisClient.setEx(cacheKey, 3600, JSON.stringify(result));
 
       return NextResponse.json(result, { status: 200 });
     }
     
-    // DISINI KITA MANUALKAN SIMPLE SEARCH (sesuai kode frontend Anda):
+    // --- SCENARIO 2: SEARCH / FILTER ---
+    // Handle search queries with specific cache keys to avoid returning unrelated results.
     const titleSearch = searchParams.get('keyword');
     const page = Number(searchParams.get('page')) || 1;
 
+    // Construct a unique cache key for this specific search query and page
     const searchCacheKey = titleSearch ? `products:search:${titleSearch}:${page}` : null;
 
     if (searchCacheKey) {
@@ -51,7 +65,7 @@ export const GET = async (req: Request) => {
       }
     }
 
-    
+    // Perform the search in the database
     const result = await payload.find({
       collection: 'products',
       depth: 1,
@@ -61,11 +75,10 @@ export const GET = async (req: Request) => {
           contains: titleSearch
         }
       } : undefined,
-      // Tambahkan logic pagination dari params jika perlu (page, limit, sort)
       page,
     });
 
-    // Simpan ke Redis (Expired 1 jam / 3600 detik)
+    // Cache the search result if a valid key exists
     if (searchCacheKey) {
       await redisClient.setEx(searchCacheKey, 3600, JSON.stringify(result));
     }
@@ -79,9 +92,18 @@ export const GET = async (req: Request) => {
 };
 
 
+/**
+ * POST /api/products
+ * 
+ * Creates a new product and invalidates the cache to ensure data consistency.
+ */
 export async function POST(req: NextRequest) {
+  const payload = await getPayload({ config: configPromise });
+
   try {
     const body = await req.json();
+    
+    // Create product in Payload CMS
     const createdProduct = await payload.create({
       collection: 'products',
       data: body,
@@ -91,10 +113,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
     }
 
-    // Invalidate the 'products:all' cache after a new product is added
-    // Assuming 'redis' client is available in this scope
-    // If not, you'll need to import/initialize it.
-    // Example: import { redis } from '@/lib/redis';
+    // --- CACHE INVALIDATION ---
+    // Clear all product-related caches so the new product appears in lists immediately.
+    // This includes 'products:all' and any search caches.
     await deleteCache('products:*');
 
     return NextResponse.json(createdProduct, { status: 201 });

@@ -29,6 +29,12 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
+/**
+ * FormField Component
+ * 
+ * Connects a form field to react-hook-form.
+ * Provides context for label, control, description, and message components.
+ */
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,

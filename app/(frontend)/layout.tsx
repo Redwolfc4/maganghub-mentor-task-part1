@@ -7,6 +7,12 @@ export const metadata = {
   title: 'Data Product Management',
 }
 
+/**
+ * Root Layout
+ * 
+ * The top-level layout for the application.
+ * Wraps the application in a QueryProvider for React Query support.
+ */
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
 

@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url'
 import config from '@/payload.config'
 import './styles.css'
 import Header from './component/Header'
+/**
+ * Home Page
+ * 
+ * The landing page of the application.
+ * Displays a welcome message and a link to the products page.
+ */
 export default async function HomePage() {
   const headers = await getHeaders()
   const payloadConfig = await config

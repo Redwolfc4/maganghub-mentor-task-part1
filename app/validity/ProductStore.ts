@@ -134,6 +134,15 @@ export interface UseProductsResult {
     deleteError: Error | null;
 }
 
+/**
+ * Custom Hook: useProducts
+ * 
+ * Manages product data fetching, searching, and mutations (add, update, delete).
+ * Uses TanStack Query for caching and state management.
+ * 
+ * @param searchQuery - Optional keyword to filter products.
+ * @returns Object containing data, loading states, and mutation functions.
+ */
 export const useProducts = (searchQuery: string = ""): UseProductsResult => {
   const queryClient = useQueryClient();
 
@@ -197,6 +206,14 @@ export const useProducts = (searchQuery: string = ""): UseProductsResult => {
 };
 
 // --- CUSTOM HOOK: GET 1 PRODUK BY ID ---
+/**
+ * Custom Hook: useProductById
+ * 
+ * Fetches a single product by its ID.
+ * 
+ * @param id - The ID of the product to fetch.
+ * @returns Query result containing the product data.
+ */
 export const useProductById = (id: string | undefined) => {
   return useQuery({
     queryKey: ["product", id],

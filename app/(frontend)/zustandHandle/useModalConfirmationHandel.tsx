@@ -16,6 +16,12 @@ interface FilterProductState {
     setFilterQuery: (query: string) => void;
 }
 
+/**
+ * Zustand Store: useModalConfirmationHandle
+ * 
+ * Manages the state of the delete confirmation modal.
+ * Stores the ID of the item to be deleted and handles open/close actions.
+ */
 export const useModalConfirmationHandle = create<ConfirmDeleteModalState>((set, get) => ({
     isOpen: false,
     selectedId: null,
@@ -41,6 +47,12 @@ const getDataurl = () => {
     return searchParams.get('title') || '';
 }
 
+/**
+ * Zustand Store: useFilterProduct
+ * 
+ * Manages the product filter state (search query).
+ * Syncs the filter state with the URL query parameters.
+ */
 export const useFilterProduct = create<FilterProductState>((set) => ({
     filterQuery: getDataurl(),
     setFilterQuery: (query) => {

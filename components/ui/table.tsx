@@ -4,6 +4,12 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Table Component
+ * 
+ * A responsive table component with scrollable container.
+ * Designed to work with other Table subcomponents.
+ */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div

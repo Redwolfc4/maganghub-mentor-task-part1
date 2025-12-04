@@ -4,6 +4,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useProductById } from '@/app/validity/ProductStore';
 import { Button } from '@/components/ui/button';
 
+/**
+ * Product Detail Page
+ * 
+ * Displays detailed information about a specific product.
+ * Fetches data using the `useProductById` hook.
+ */
 const ProductDetailPage = () => {
     const router = useRouter()
     const { id } = useParams() as { id: string };
