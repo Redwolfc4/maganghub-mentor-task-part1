@@ -136,9 +136,12 @@ export default function AddProductsPage() {
     const onSubmit = (values: ProductFormType) => {
         addProduct(values, {
             onSuccess: () => {
-                alert("Produk berhasil ditambahkan! ✅");
+                // alert("Produk berhasil ditambahkan! ✅");
                 form.reset();        // reset form field
-                router.push('/products'); // arahkan ke halaman list
+                console.log(values)
+                setTimeout(() => {
+                    router.push("/products");
+                }, 50); // arahkan ke halaman list
             },
             onError: (error) => {
                 alert(`Gagal: ${error.message}`);

@@ -36,6 +36,7 @@ export const useModalConfirmationHandle = create<ConfirmDeleteModalState>((set, 
 }));
 
 const getDataurl = () => {
+    if (typeof window === 'undefined') return '';
     const searchParams = new URLSearchParams(window.location.search);
     return searchParams.get('title') || '';
 }
@@ -43,6 +44,7 @@ const getDataurl = () => {
 export const useFilterProduct = create<FilterProductState>((set) => ({
     filterQuery: getDataurl(),
     setFilterQuery: (query) => {
+        if (typeof window === 'undefined') return;
         const params = new URLSearchParams(window.location.search);
         if (query) {
             params.set('title', query);

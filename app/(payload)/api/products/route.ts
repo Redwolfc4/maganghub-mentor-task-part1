@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import configPromise from '@payload-config'; // Pastikan path ini sesuai config payload Anda
 import redisClient from '@/lib/redis'; // Import redis helper yang sudah kita buat sebelumnya
+import { deleteCache } from '@/lib/cacheHandler';
 
+const payload = await getPayload({ config: configPromise });
 export const GET = async (req: Request) => {
-  const payload = await getPayload({ config: configPromise });
   
   // 1. Cek apakah ada Query Params (Search/Filter/Pagination)
   const { searchParams } = new URL(req.url);
@@ -12,7 +13,7 @@ export const GET = async (req: Request) => {
 
   // Key untuk cache "Semua Data" (Halaman 1, tanpa filter)
   const cacheKey = 'products:all';
-
+  
   try {
     // --- SKENARIO 1: GET ALL (Tanpa Filter) -> PAKAI REDIS ---
     if (!hasQuery) {
@@ -36,23 +37,20 @@ export const GET = async (req: Request) => {
 
       return NextResponse.json(result, { status: 200 });
     }
-
-    // --- SKENARIO 2: SEARCH / FILTER -> LANGSUNG DATABASE ---
-    // Jika user melakukan search, kita tidak pakai cache 'products:all'
-    // Kita biarkan Payload menangani query string-nya secara otomatis
-    
-    // Kita harus parse query string manual atau gunakan local API payload dengan 'where'
-    // Cara paling aman untuk meneruskan query string kompleks Payload adalah 
-    // membiarkan Payload REST API menanganinya, TAPI karena kita sudah override route ini,
-    // kita harus memetakan query params ke payload.find().
-    
-    // Tips: Parsing query params URL ke format payload.find itu rumit.
-    // Solusi cepat: Kita passing searchParams langsung ke opsi 'where' jika sederhana,
-    // ATAU (Better Approach) -> Gunakan REST operations bawaan Payload tapi dipanggil internal.
     
     // DISINI KITA MANUALKAN SIMPLE SEARCH (sesuai kode frontend Anda):
     const titleSearch = searchParams.get('keyword');
-    console.log(titleSearch)
+    const page = Number(searchParams.get('page')) || 1;
+
+    const searchCacheKey = titleSearch ? `products:search:${titleSearch}:${page}` : null;
+
+    if (searchCacheKey) {
+      const cachedSearchData = await redisClient.get(searchCacheKey);
+      if (cachedSearchData) {
+        return NextResponse.json(JSON.parse(cachedSearchData), { status: 200 });
+      }
+    }
+
     
     const result = await payload.find({
       collection: 'products',
@@ -64,8 +62,13 @@ export const GET = async (req: Request) => {
         }
       } : undefined,
       // Tambahkan logic pagination dari params jika perlu (page, limit, sort)
-      page: Number(searchParams.get('page')) || 1,
+      page,
     });
+
+    // Simpan ke Redis (Expired 1 jam / 3600 detik)
+    if (searchCacheKey) {
+      await redisClient.setEx(searchCacheKey, 3600, JSON.stringify(result));
+    }
 
     return NextResponse.json(result, { status: 200 });
 
@@ -74,3 +77,29 @@ export const GET = async (req: Request) => {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 };
+
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const createdProduct = await payload.create({
+      collection: 'products',
+      data: body,
+    });
+
+    if (!createdProduct) {
+      return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    }
+
+    // Invalidate the 'products:all' cache after a new product is added
+    // Assuming 'redis' client is available in this scope
+    // If not, you'll need to import/initialize it.
+    // Example: import { redis } from '@/lib/redis';
+    await deleteCache('products:*');
+
+    return NextResponse.json(createdProduct, { status: 201 });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
